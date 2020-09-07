@@ -1,9 +1,3 @@
-package users
-
-schema {
-    query: Query
-    mutation: Mutation
-}
 
 type Query {
     user(id:ID!): User!
@@ -12,7 +6,7 @@ type Query {
 type Mutation {
     createUser(input: NewUser!): User!
     updateUser(input: UpdateUser!): User!
-    updateNotification(input: UpdateNotification): User!}
+    updateNotification(input: UpdateNotification): User!
 }
 
 type User {
