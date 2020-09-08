@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
     "gopkg.in/mgo.v2/bson"
@@ -15,22 +14,22 @@ import (
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
 	var user *model.User
-	count, err := r.users.Find(bson.M{"email": input.Email}).Count()
-	if err != nil {
-		return User{}, err
-	} else if count > 0 {
-		return *model.User{}, errors.New("user with that email already exists")
-	}
+	r.users.Find(bson.M{"email": input.Email}).Count()
+// 	if err != nil {
+// 		return model.User{}, err
+// 	} else if count > 0 {
+// 		return model.User{}, errors.New("user with that email already exists")
+// 	}
 
-	err = r.users.Insert(bson.M{"email": input.Email})
-	if err != nil {
-		return *model.User{}, err
-	}
+	r.users.Insert(bson.M{"email": input.Email})
+// 	if err != nil {
+// 		return *model.User{}, err
+// 	}
 
-	err = r.users.Find(bson.M{"email": input.Email}).One(&user)
-	if err != nil {
-		return User{}, err
-	}
+	r.users.Find(bson.M{"email": input.Email}).One(&user)
+// 	if err != nil {
+// 		return User{}, err
+// 	}
 
 	return user, nil
 }
