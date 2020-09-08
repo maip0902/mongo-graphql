@@ -8,22 +8,23 @@ import (
 	"errors"
 	"fmt"
 
+    "gopkg.in/mgo.v2/bson"
 	"github.com/maip0902/mongo-graphql/users/graph/generated"
 	"github.com/maip0902/mongo-graphql/users/graph/model"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	var user User
+	var user *model.User
 	count, err := r.users.Find(bson.M{"email": input.Email}).Count()
 	if err != nil {
 		return User{}, err
 	} else if count > 0 {
-		return User{}, errors.New("user with that email already exists")
+		return *model.User{}, errors.New("user with that email already exists")
 	}
 
 	err = r.users.Insert(bson.M{"email": input.Email})
 	if err != nil {
-		return User{}, err
+		return *model.User{}, err
 	}
 
 	err = r.users.Find(bson.M{"email": input.Email}).One(&user)
