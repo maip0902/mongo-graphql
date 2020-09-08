@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/maip0902/mongo-graphql/users/graph/generated"
@@ -12,7 +13,25 @@ import (
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	var user User
+	count, err := r.users.Find(bson.M{"email": input.Email}).Count()
+	if err != nil {
+		return User{}, err
+	} else if count > 0 {
+		return User{}, errors.New("user with that email already exists")
+	}
+
+	err = r.users.Insert(bson.M{"email": input.Email})
+	if err != nil {
+		return User{}, err
+	}
+
+	err = r.users.Find(bson.M{"email": input.Email}).One(&user)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUser) (*model.User, error) {
