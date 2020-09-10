@@ -7,14 +7,19 @@ import (
 	"context"
 	"fmt"
 
-    "gopkg.in/mgo.v2/bson"
+    "github.com/globalsign/mgo/bson"
 	"github.com/maip0902/mongo-graphql/users/graph/generated"
 	"github.com/maip0902/mongo-graphql/users/graph/model"
+	"github.com/maip0902/mongo-graphql/db"
 )
 
+
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	var user *model.User
-	r.users.Find(bson.M{"email": input.Email}).Count()
+	user := &model.User{
+	    Email: input.Email,
+	}
+	fmt.Printf("%v", user)
+
 // 	if err != nil {
 // 		return model.User{}, err
 // 	} else if count > 0 {
@@ -26,7 +31,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 // 		return *model.User{}, err
 // 	}
 
-	r.users.Find(bson.M{"email": input.Email}).One(&user)
+// 	r.users.Find(bson.M{"email": input.Email}).One(&user)
 // 	if err != nil {
 // 		return User{}, err
 // 	}
@@ -51,10 +56,16 @@ func (r *subscriptionResolver) NotificationAdded(ctx context.Context, id string)
 }
 
 // Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+func (r *Resolver) Mutation() generated.MutationResolver {
+    r.users = db.GetCollection("users")
+    return &mutationResolver{r}
+}
 
 // Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+func (r *Resolver) Query() generated.QueryResolver {
+    r.users = db.GetCollection("users")
+    return &queryResolver{r}
+}
 
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
