@@ -14,8 +14,6 @@ func ConnectDB() {
 }
 
 func GetCollection(collection string) *mgo.Collection {
-    session, _ := mgo.Dial("mongo-db:27017")
-    session.SetMode(mgo.Monotonic, true)
-    db = session.DB("test")
+    ConnectDB()
     return db.C(collection)
 }
