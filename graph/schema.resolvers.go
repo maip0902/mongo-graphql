@@ -9,8 +9,8 @@ import (
 	"errors"
 
     "github.com/globalsign/mgo/bson"
-	"github.com/maip0902/mongo-graphql/users/graph/generated"
-	"github.com/maip0902/mongo-graphql/users/graph/model"
+	"github.com/maip0902/mongo-graphql/graph/generated"
+	"github.com/maip0902/mongo-graphql/graph/model"
 	"github.com/maip0902/mongo-graphql/db"
 )
 

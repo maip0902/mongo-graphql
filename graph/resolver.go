@@ -5,7 +5,7 @@ package graph
 // It serves as dependency injection for your app, add any dependencies you require here.
 import (
     "github.com/globalsign/mgo"
-    "github.com/maip0902/mongo-graphql/users/graph/generated"
+    "github.com/maip0902/mongo-graphql/graph/generated"
     "github.com/maip0902/mongo-graphql/db"
 )
 
