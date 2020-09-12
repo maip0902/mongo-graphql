@@ -19,7 +19,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	user := &model.User{
 	    Email: input.Email,
 	}
-	fmt.Printf("%v", user)
 
 // 	if err != nil {
 // 		return model.User{}, err
@@ -72,11 +71,31 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 }
 
 func (r *mutationResolver) UpdateNotification(ctx context.Context, input *model.UpdateNotification) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	var user *model.User
+	var oid = bson.ObjectIdHex(input.UserID)
+	if err := r.users.Find(bson.M{"_id": oid}).One(&user); err != nil {
+	    return user, err
+	}
+	for index, val := range user.Notifications {
+	    if bson.ObjectId(val.ID).Hex() == input.ID {
+	        val.Seen = input.Seen
+	        user.Notifications[index] = val
+	        break
+	    }
+	}
+    if err := r.users.UpdateId(oid, user); err != nil {
+        return user, err
+    }
+    	return user, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	var user *model.User
+    if err := r.users.FindId(bson.ObjectIdHex(id)).One(&user); err != nil {
+        return user, err
+    }
+    user.ID = bson.ObjectId(user.ID).Hex()
+    return user, nil
 }
 
 func (r *subscriptionResolver) NotificationAdded(ctx context.Context, id string) (<-chan *model.User, error) {
