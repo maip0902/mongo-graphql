@@ -27,7 +27,7 @@ type UpdateUser struct {
 }
 
 type User struct {
-	ID            string          `json:"id" bson:"_id"`
+	ID            string          `json:"id"  bson:"_id"`
 	First         string          `json:"first"`
 	Last          string          `json:"last"`
 	Email         string          `json:"email"`
