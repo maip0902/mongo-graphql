@@ -1,14 +1,3 @@
-
-type Query {
-    user(id:ID!): User!
-}
-
-type Mutation {
-    createUser(input: NewUser!): User!
-    updateUser(input: UpdateUser!): User!
-    updateNotification(input: UpdateNotification): User!
-}
-
 type User {
     id: ID!
     first: String!
@@ -22,27 +11,6 @@ type Notification {
     seen: Boolean!
     text: String!
     title: String!
-}
-
-input NewUser {
-    email: String!
-}
-
-input UpdateUser {
-    id: ID!
-    first: String
-    last: String
-    email: String
-}
-
-input UpdateNotification {
-    id: ID!
-    userID: ID!
-    seen: Boolean!
-}
-
-type Subscription {
-    notificationAdded(id: ID!): User!
 }
 
 

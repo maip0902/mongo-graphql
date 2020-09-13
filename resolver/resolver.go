@@ -20,3 +20,19 @@ func New() *generated.Config {
         },
     }
 }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver {
+    r.users = db.GetCollection("users")
+    return &mutationResolver{r}
+}
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver {
+    r.users = db.GetCollection("users")
+    return &queryResolver{r}
+}
+
+type mutationResolver struct{ *Resolver }
+
+type queryResolver struct{ *Resolver }

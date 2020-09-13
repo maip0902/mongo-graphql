@@ -1,0 +1,16 @@
+input NewUser {
+    email: String!
+}
+
+input UpdateUser {
+    id: ID!
+    first: String
+    last: String
+    email: String
+}
+
+input UpdateNotification {
+    id: ID!
+    userID: ID!
+    seen: Boolean!
+}

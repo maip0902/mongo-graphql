@@ -6,14 +6,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/maip0902/mongo-graphql/graph/model"
+	"github.com/maip0902/mongo-graphql/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -38,7 +37,6 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
-	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -62,10 +60,6 @@ type ComplexityRoot struct {
 		User func(childComplexity int, id string) int
 	}
 
-	Subscription struct {
-		NotificationAdded func(childComplexity int, id string) int
-	}
-
 	User struct {
 		Email         func(childComplexity int) int
 		First         func(childComplexity int) int
@@ -82,9 +76,6 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	User(ctx context.Context, id string) (*model.User, error)
-}
-type SubscriptionResolver interface {
-	NotificationAdded(ctx context.Context, id string) (<-chan *model.User, error)
 }
 
 type executableSchema struct {
@@ -178,18 +169,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
 
-	case "Subscription.notificationAdded":
-		if e.complexity.Subscription.NotificationAdded == nil {
-			break
-		}
-
-		args, err := ec.field_Subscription_notificationAdded_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Subscription.NotificationAdded(childComplexity, args["id"].(string)), true
-
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -263,23 +242,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
-	case ast.Subscription:
-		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
-
-		var buf bytes.Buffer
-		return func(ctx context.Context) *graphql.Response {
-			buf.Reset()
-			data := next()
-
-			if data == nil {
-				return nil
-			}
-			data.MarshalGQL(&buf)
-
-			return &graphql.Response{
-				Data: buf.Bytes(),
-			}
-		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -306,33 +268,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "schema/schema.graphql", Input: `
-type Query {
-    user(id:ID!): User!
-}
-
-type Mutation {
-    createUser(input: NewUser!): User!
-    updateUser(input: UpdateUser!): User!
-    updateNotification(input: UpdateNotification): User!
-}
-
-type User {
-    id: ID!
-    first: String!
-    last: String!
-    email: String!
-    notifications: [Notification!]!
-}
-
-type Notification {
-    id: ID!
-    seen: Boolean!
-    text: String!
-    title: String!
-}
-
-input NewUser {
+	{Name: "schema/inputs.graphql", Input: `input NewUser {
     email: String!
 }
 
@@ -347,10 +283,28 @@ input UpdateNotification {
     id: ID!
     userID: ID!
     seen: Boolean!
+}`, BuiltIn: false},
+	{Name: "schema/mutation.graphql", Input: `type Mutation {
+    createUser(input: NewUser!): User!
+    updateUser(input: UpdateUser!): User!
+    updateNotification(input: UpdateNotification): User!
+}`, BuiltIn: false},
+	{Name: "schema/query.graphql", Input: `type Query {
+    user(id:ID!): User!
+}`, BuiltIn: false},
+	{Name: "schema/schema.graphql", Input: `type User {
+    id: ID!
+    first: String!
+    last: String!
+    email: String!
+    notifications: [Notification!]!
 }
 
-type Subscription {
-    notificationAdded(id: ID!): User!
+type Notification {
+    id: ID!
+    seen: Boolean!
+    text: String!
+    title: String!
 }
 
 
@@ -370,7 +324,7 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	var arg0 model.NewUser
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithFieldInputContext(ctx, graphql.NewFieldInputWithField("input"))
-		arg0, err = ec.unmarshalNNewUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		arg0, err = ec.unmarshalNNewUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNewUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -385,7 +339,7 @@ func (ec *executionContext) field_Mutation_updateNotification_args(ctx context.C
 	var arg0 *model.UpdateNotification
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithFieldInputContext(ctx, graphql.NewFieldInputWithField("input"))
-		arg0, err = ec.unmarshalOUpdateNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUpdateNotification(ctx, tmp)
+		arg0, err = ec.unmarshalOUpdateNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUpdateNotification(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -400,7 +354,7 @@ func (ec *executionContext) field_Mutation_updateUser_args(ctx context.Context, 
 	var arg0 model.UpdateUser
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithFieldInputContext(ctx, graphql.NewFieldInputWithField("input"))
-		arg0, err = ec.unmarshalNUpdateUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUpdateUser(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUpdateUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -425,21 +379,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithFieldInputContext(ctx, graphql.NewFieldInputWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Subscription_notificationAdded_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -530,7 +469,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -571,7 +510,7 @@ func (ec *executionContext) _Mutation_updateUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateNotification(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -612,7 +551,7 @@ func (ec *executionContext) _Mutation_updateNotification(ctx context.Context, fi
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -789,7 +728,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -859,57 +798,6 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Subscription_notificationAdded(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Subscription",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Subscription_notificationAdded_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().NotificationAdded(rctx, args["id"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return nil
-	}
-	return func() graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan *model.User)
-		if !ok {
-			return nil
-		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
-	}
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -1079,7 +967,7 @@ func (ec *executionContext) _User_notifications(ctx context.Context, field graph
 	}
 	res := resTmp.([]*model.Notification)
 	fc.Result = res
-	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
+	return ec.marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNotificationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2372,26 +2260,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var subscriptionImplementors = []string{"Subscription"}
-
-func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
-	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
-		Object: "Subscription",
-	})
-	if len(fields) != 1 {
-		ec.Errorf(ctx, "must subscribe to exactly one stream")
-		return nil
-	}
-
-	switch fields[0].Name {
-	case "notificationAdded":
-		return ec._Subscription_notificationAdded(ctx, fields[0])
-	default:
-		panic("unknown field " + strconv.Quote(fields[0].Name))
-	}
-}
-
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
@@ -2714,12 +2582,12 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
+func (ec *executionContext) unmarshalNNewUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
 	res, err := ec.unmarshalInputNewUser(ctx, v)
 	return res, graphql.WrapErrorWithInputPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNotificationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNotificationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -2743,7 +2611,7 @@ func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalNNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNotification(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -2756,7 +2624,7 @@ func (ec *executionContext) marshalNNotification2ᚕᚖgithubᚗcomᚋmaip0902�
 	return ret
 }
 
-func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalNNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -2781,16 +2649,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {
+func (ec *executionContext) unmarshalNUpdateUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUpdateUser(ctx context.Context, v interface{}) (model.UpdateUser, error) {
 	res, err := ec.unmarshalInputUpdateUser(ctx, v)
 	return res, graphql.WrapErrorWithInputPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3077,7 +2945,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) unmarshalOUpdateNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋgraphᚋmodelᚐUpdateNotification(ctx context.Context, v interface{}) (*model.UpdateNotification, error) {
+func (ec *executionContext) unmarshalOUpdateNotification2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUpdateNotification(ctx context.Context, v interface{}) (*model.UpdateNotification, error) {
 	if v == nil {
 		return nil, nil
 	}

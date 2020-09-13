@@ -9,9 +9,7 @@ import (
 	"fmt"
 
 	"github.com/globalsign/mgo/bson"
-	"github.com/maip0902/mongo-graphql/graph/generated"
-	"github.com/maip0902/mongo-graphql/graph/model"
-	"github.com/maip0902/mongo-graphql/db"
+	"github.com/maip0902/mongo-graphql/model"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
@@ -97,26 +95,3 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 	user.ID = bson.ObjectId(user.ID).Hex()
 	return user, nil
 }
-
-func (r *subscriptionResolver) NotificationAdded(ctx context.Context, id string) (<-chan *model.User, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver {
-    r.users = db.GetCollection("users")
-    return &mutationResolver{r}
-}
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver {
-    r.users = db.GetCollection("users")
-    return &queryResolver{r}
-}
-
-// Subscription returns generated.SubscriptionResolver implementation.
-func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
-
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
