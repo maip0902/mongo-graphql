@@ -17,21 +17,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Email: input.Email,
 	}
 
-	// 	if err != nil {
-	// 		return model.User{}, err
-	// 	} else if count > 0 {
-	// 		return model.User{}, errors.New("user with that email already exists")
-	// 	}
-
 	r.users.Insert(bson.M{"email": input.Email})
-	// 	if err != nil {
-	// 		return *model.User{}, err
-	// 	}
-
-	// 	r.users.Find(bson.M{"email": input.Email}).One(&user)
-	// 	if err != nil {
-	// 		return User{}, err
-	// 	}
 
 	return user, nil
 }
