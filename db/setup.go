@@ -6,7 +6,6 @@ import (
 
 var db *mgo.Database
 
-
 func ConnectDB() {
     session, _ := mgo.Dial("mongo-db:27017")
     session.SetMode(mgo.Monotonic, true)
