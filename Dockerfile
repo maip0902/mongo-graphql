@@ -8,4 +8,4 @@ COPY . /go/src/mongo-graphql
 
 RUN go get github.com/99designs/gqlgen
 RUN go get github.com/globalsign/mgo
-CMD ["./build/build"]
+#CMD ["./build/build"]
