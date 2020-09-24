@@ -57,7 +57,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		User func(childComplexity int, id string) int
+		FindUserByID func(childComplexity int, id string) int
 	}
 
 	User struct {
@@ -75,7 +75,7 @@ type MutationResolver interface {
 	UpdateNotification(ctx context.Context, input *model.UpdateNotification) (*model.User, error)
 }
 type QueryResolver interface {
-	User(ctx context.Context, id string) (*model.User, error)
+	FindUserByID(ctx context.Context, id string) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -157,17 +157,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Notification.Title(childComplexity), true
 
-	case "Query.user":
-		if e.complexity.Query.User == nil {
+	case "Query.findUserById":
+		if e.complexity.Query.FindUserByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_user_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_findUserById_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.FindUserByID(childComplexity, args["id"].(string)), true
 
 	case "User.email":
 		if e.complexity.User.Email == nil {
@@ -290,7 +290,7 @@ input UpdateNotification {
     updateNotification(input: UpdateNotification): User!
 }`, BuiltIn: false},
 	{Name: "schema/query.graphql", Input: `type Query {
-    user(id:ID!): User!
+    findUserById(id:ID!): User!
 }`, BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: `type User {
     id: ID!
@@ -378,7 +378,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_findUserById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -690,7 +690,7 @@ func (ec *executionContext) _Notification_title(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_findUserById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -706,7 +706,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_user_args(ctx, rawArgs)
+	args, err := ec.field_Query_findUserById_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -714,7 +714,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().User(rctx, args["id"].(string))
+		return ec.resolvers.Query().FindUserByID(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2231,7 +2231,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "user":
+		case "findUserById":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2239,7 +2239,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_user(ctx, field)
+				res = ec._Query_findUserById(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

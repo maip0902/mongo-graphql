@@ -73,7 +73,7 @@ func (r *mutationResolver) UpdateNotification(ctx context.Context, input *model.
 	return user, nil
 }
 
-func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+func (r *queryResolver) FindUserById(ctx context.Context, id string) (*model.User, error) {
 	var user *model.User
 	if err := r.users.FindId(bson.ObjectIdHex(id)).One(&user); err != nil {
 		return user, err
