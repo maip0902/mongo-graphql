@@ -81,3 +81,12 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 	user.ID = bson.ObjectId(user.ID).Hex()
 	return user, nil
 }
+
+func (r *queryResolver) UserByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user *model.User
+	if err := r.users.Find(bson.M{"email": email}).One(&user); err != nil {
+		return user, err
+	}
+	user.ID = bson.ObjectId(user.ID).Hex()
+	return user, nil
+}
