@@ -10,6 +10,7 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/maip0902/mongo-graphql/model"
+	"github.com/maip0902/mongo-graphql/validate"
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
@@ -17,6 +18,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Email: input.Email,
 	}
 
+    err := user.createUserValidate()
 	r.users.Insert(bson.M{"email": input.Email})
 
 	return user, nil
