@@ -25,11 +25,3 @@ type UpdateUser struct {
 	Last  *string `json:"last"`
 	Email *string `json:"email"`
 }
-
-type User struct {
-	ID            string          `json:"id" bson:"_id"`
-	First         string          `json:"first"`
-	Last          string          `json:"last"`
-	Email         string          `json:"email"`
-	Notifications []*Notification `json:"notifications"`
-}
