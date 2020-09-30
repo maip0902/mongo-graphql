@@ -14,8 +14,7 @@ type User struct {
 }
 
 func (createUser *User) CreateUserValidate() error {
-    return validation.ValidateStruct(&createUser,
-    validation.Field(&createUser.Email, is.Email),
-    validation.Field(&createUser.First, validation.Required),
+    return validation.Validate(&createUser.Email,
+        is.Email.Error("正しいメールアドレスの形で入力してください"),
     )
 }
