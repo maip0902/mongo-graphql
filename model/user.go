@@ -18,3 +18,12 @@ func (createUser *User) CreateUserValidate() error {
         is.Email.Error("正しいメールアドレスの形で入力してください"),
     )
 }
+
+// 構造体のバリデーションはis使うとエラーメッセージ指定できないので一旦保留
+//
+// func (createUser User) CreateUserValidate() error {
+//
+//      return validation.ValidateStruct(&createUser,
+//          validation.Field(&createUser.Email, govalidator.IsExistingEmail),
+//      )
+//  }
