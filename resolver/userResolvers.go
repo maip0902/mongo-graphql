@@ -18,6 +18,10 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}
 
     err := user.CreateUserValidate()
+    count, err := r.users.Find(bson.M{"email": input.Email}).Count()
+    if (err != nil || count > 0) {
+        return nil, errors.New("既に登録されているメールアドレスです")
+    }
     if(err == nil) {
     	r.users.Insert(bson.M{"email": input.Email})
     } else {
