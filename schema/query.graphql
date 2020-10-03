@@ -1,4 +1,4 @@
 type Query {
     findUserById(id:ID!): User
-    findUserByName(first:String!): User
+    findUserByName(first:String!): [User]
 }

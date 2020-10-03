@@ -76,7 +76,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	FindUserByID(ctx context.Context, id string) (*model.User, error)
-	FindUserByName(ctx context.Context, first string) (*model.User, error)
+	FindUserByName(ctx context.Context, first string) ([]*model.User, error)
 }
 
 type executableSchema struct {
@@ -304,7 +304,7 @@ input UpdateNotification {
 }`, BuiltIn: false},
 	{Name: "schema/query.graphql", Input: `type Query {
     findUserById(id:ID!): User
-    findUserByName(first:String!): User
+    findUserByName(first:String!): [User]
 }`, BuiltIn: false},
 	{Name: "schema/schema.graphql", Input: `type User {
     id: ID!
@@ -790,9 +790,9 @@ func (ec *executionContext) _Query_findUserByName(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3023,6 +3023,46 @@ func (ec *executionContext) unmarshalOUpdateNotification2ᚖgithubᚗcomᚋmaip0
 	}
 	res, err := ec.unmarshalInputUpdateNotification(ctx, v)
 	return &res, graphql.WrapErrorWithInputPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋmaip0902ᚋmongoᚑgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {

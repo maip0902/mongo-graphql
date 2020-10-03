@@ -92,11 +92,15 @@ func (r *queryResolver) FindUserByID(ctx context.Context, id string) (*model.Use
 	return user, nil
 }
 
-func (r *queryResolver) FindUserByName(ctx context.Context, first string) (*model.User, error) {
-	var user *model.User
-	if err := r.users.Find(bson.M{"first": bson.RegEx{first + ".*", ""}}).One(&user); err != nil {
-		return user, err
-	}
-	user.ID = bson.ObjectId(user.ID).Hex()
-	return user, nil
+func (r *queryResolver) FindUserByName(ctx context.Context, first string) ([]*model.User, error) {
+// 	var user *model.User
+    var users []*model.User
+ 	if err := r.users.Find(bson.M{"first": bson.RegEx{first + ".*", ""}}).All(&users); err != nil {
+ 	    return nil, err
+ 	}
+    for _, user := range users {
+    	user.ID = bson.ObjectId(user.ID).Hex()
+    }
+// 	user.ID = bson.ObjectId(user.ID).Hex()
+	return users, nil
 }
