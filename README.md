@@ -41,3 +41,23 @@ make app
 ```
 make ps
 ```
+
+# gqlgenの実装手順
+### クエリを追加したい
+1. schema/query.graphql に追加したいクエリのスキーマ定義を書く
+2. ルートディレクトリで下記コマンド実行
+
+```
+go run scripts/gqlgen.go
+```
+3. resolverの実装をする
+
+### 新しくモデルを作りたい
+1. schema/input.graphql に追加したいモデルのスキーマ定義を書く
+2. ルートディレクトリで下記コマンド実行
+
+```
+go run scripts/gqlgen.go
+```
+3. resolverの実装をする
+
